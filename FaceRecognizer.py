@@ -63,21 +63,20 @@ def train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH"):
         recognizer = cv2.face.createFisherFaceRecognizer()
 
     recognizer.train(face_list, np.array(label_list))
+    return recognizer
 
-# takes image, list of names that correspond to labels, detection classifier obj, trained recognizer obj
-# if that image is recognized the face will be boxed and the name of the person that the machine thinks it is will appear with the confidence
-# returns image with boxed face, labeled name, labeled confidence
-def get_recognition(img, training_data_path, detection_classifier, opencv_recognizer_type):
+# takes image, list of names respective to labels (name[label] = person with that label), detection classifier object, trained recognizer object
+# boxes all faces recognized in image and labels the box with name and confidence (distance to most similar image in training data) of prediction
+# returns image with boxed faces, labeled names, labeled confidences
+def get_recognition(img, name_list, detection_classifier, trained_recognizer):
     img_copy = img.copy()
-    face, coord = FaceDetector.get_faces(img, detection_classifier)[0] # get 1st face in img
+    data = FaceDetector.get_faces(img, detection_classifier) # get all faces/coords in image and try to detect all
+            #  what happens if face isn't in training data
 
-    name_list = get_name_list(training_data_path)
-    face_list, label_list = preprocess(training_data_path, detection_classifier)
-    trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type)
-    label, confidence = trained_recognizer.predict(face)
-
-    face_name = name_list[label]
-    label_image(img_copy, coord, face_name, confidence)
+    for face, coord in data: # perform recognition on every detected face
+        label, confidence = trained_recognizer.predict(face)
+        face_name = name_list[label]
+        label_image(img_copy, coord, face_name, confidence)
     return img_copy
 
 
@@ -94,4 +93,9 @@ if __name__ == '__main__':
     img = Initializer.load_image(image_path)
     detection_classifier = Initializer.load_classifier(detection_classifier_path)
 
-    ret_img = get_recognition(img,training_data_path, detection_classifier, opencv_recognizer_type="LBPH")
+    name_list = get_name_list(training_data_path)
+    face_list, label_list = preprocess(training_data_path, detection_classifier)
+    trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH")
+
+    ret_img = get_recognition(img,training_data_path, detection_classifier, trained_recognizer)
+    Initializer.display_image("Recognized Faces", ret_img)
