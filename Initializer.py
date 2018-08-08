@@ -2,8 +2,8 @@ import cv2
 import os
 
 def display_img(title, img):
-    cv2.imshow(str(title), img)
     print("press any key to close window")
+    cv2.imshow(str(title), img)
     cv2.waitKey(0)  # wait for x ms -> 0 means wait until a key is pressed
     cv2.destroyAllWindows()
 
