@@ -1,101 +1,74 @@
-import FaceDetector, Initializer
 import cv2
 import os
-import numpy as np
-from pathlib import Path
+
+class FaceDetector(object):
+
+    # loads image, trains classifier
+    def __init__(self, image_path, opencv_classifier_path):
+        if os.path.exists(image_path):
+            self.img = cv2.imread(image_path)  # load image
+        else:
+            self.img = None
+            print("image not found bruh")
+
+        if os.path.exists(opencv_classifier_path):
+            self.classifier = cv2.CascadeClassifier(opencv_classifier_path)
+        else:
+            self.classifier = None
+            print("opencv classifier not found bruhh")
 
 
-# takes the detection classfier and path to the root directory of training data
-  # assumes every distinct sub-folder will contain images of only one person -> 1st detected face is used
-  # only checks one level below root -> if a sub-folder has a sub-folder, the 2nd will not be checked
-    # root
-    #   - dir1
-    #       - img of Harry Potter
-    #       - img of Harry Potter and other people that won't be used
-    #       - directory that won't be checked
-    #   - dir2
-    #       - img of not Harry Potter
-    #       - another img of not Harry Potter
-
-# preprocess will detect faces and create two lists with same indexing -> list of (detected faces, coords) and list of labels
-    # face at index i will have label at index i
-    # dir number will be label (opencv requires integer labels) -> first dir = 0, 2nd dir = 1
-def preprocess(training_data_path, detection_classifier):
-    face_list = []
-    label_list = []
-    dirs = os.listdir(training_data_path) # get names of everything one level below training_data_path
-    label = 0
-    for dir in dirs:
-        dir_path = Path(training_data_path, dir)
-        if os.path.isdir(dir_path): # only keep directories
-            images = os.listdir(str(dir_path))
-            for image in images:
-                image_path = Path(dir_path, image)
-                if ( (not os.path.isdir(image_path)) and (not image.startswith(".")) ): # assume it is an image if not dir and doesn't start with '.' (system file)
-                    img = Initializer.load_image(image_path)
-                    face_tuple = FaceDetector.get_faces(img, detection_classifier)[0] # get 1st face and coordinates
-                    if face_tuple[0] is not None:
-                        face_list.append(face_tuple)
-                        label_list.append(label)
-                    else:
-                        print("No face was detected in "+str(image_path)+ " so the image is not used")
-            label += 1
-
-    return face_list, label_list
-
-# names are accessed through labels -> name[label] = name of person with that label
-def get_name_list(training_data_path):
-    name_list = []
-    dirs = os.listdir(training_data_path)  # get names of everything one level below training_data_path
-    for dir in dirs:
-        dir_path = Path(training_data_path, dir)
-        if os.path.isdir(dir_path):  # only keep directories
-            name_list.append(dir) #name of dir will be the name of the person
-
-    return name_list
-
-def train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH"):
-    if opencv_recognizer_type == "LBPH":
-        recognizer = cv2.face.createLBPHFaceRecognizer()
-    if opencv_recognizer_type == "Eigen":
-        recognizer = cv2.face.createEigenFaceRecognizer()
-    if opencv_recognizer_type == "Fisher":
-        recognizer = cv2.face.createFisherFaceRecognizer()
-
-    recognizer.train(face_list, np.array(label_list))
-    return recognizer
-
-# takes image, list of names respective to labels (name[label] = person with that label), detection classifier object, trained recognizer object
-# boxes all faces recognized in image and labels the box with name and confidence (distance to most similar image in training data) of prediction
-# returns image with boxed faces, labeled names, labeled confidences
-def get_recognition(img, name_list, detection_classifier, trained_recognizer):
-    img_copy = img.copy()
-    data = FaceDetector.get_faces(img, detection_classifier) # get all faces/coords in image and try to detect all
-            #  what happens if face isn't in training data
-
-    for face, coord in data: # perform recognition on every detected face
-        label, confidence = trained_recognizer.predict(face)
-        face_name = name_list[label]
-        label_image(img_copy, coord, face_name, confidence)
-    return img_copy
+    def display_img(self, title, img):
+        cv2.imshow(str(title), img)
+        print("press any key to close window")
+        cv2.waitKey(0) # wait for x ms -> 0 means wait until a key is pressed
+        cv2.destroyAllWindows()
 
 
-def label_image(img, coord, name, confidence):
-    (x,y,w,h) = coord
-    cv2.rectangle(img, (x,y), (x+w,y+h), (0,0,255), 2)
-    txt = (name + ", " + confidence)
-    cv2.putText(img, txt, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,255), 2)
+    # takes image and opencv classifier (Haar or LBP)
+    # return list of faces detected (coordinates of rectangle around face)
+    def detect_faces(self):
+        gray_img = cv2.cvtColor(self.img, cv2.COLOR_RGB2GRAY)  # convert to grayscale bc opencv classifiers expect
+        # get list of coordinates (rectangle) for all faces
+        face_list = self.classifier.detectMultiScale(gray_img, scaleFactor=1.3, minNeighbors=5)  # scalefactor is 1.2 to rescale for faces closer to camera
+        #print("#faces found: " + str(len(face_list)))
+        return face_list
+
+
+    # takes image and opencv classifier (Haar or LBP)
+    # returns list of tuples: (image of face only, coordinates of that face) for each face in image
+    def get_faces(self):
+        face_list = self.detect_faces()
+        ret_list = []
+        #loop through detected faces
+        for (x,y,w,h) in face_list:
+            face_only = self.img[y:y+w, x:x+h]
+            face_coord = (x,y,w,h)
+            ret_list.append((face_only, face_coord))
+        return ret_list
+
+
+    # takes image and opencv classifier (Haar or LBP)
+    # returns image with rectangle drawn around each detected face
+    def get_boxed_faces(self):
+        img_copy = self.img
+        face_list = self.detect_faces()
+        # loop through detected faces and draw rectangles around them
+        for (x, y, w, h) in face_list:
+            cv2.rectangle(img_copy, (x, y), (x + w, y + h), (0, 0, 255), 2)  # img to draw on, start coord, end coord, color of rect, line width of rect
+        return img_copy
+
+
+
+
 
 if __name__ == '__main__':
-    image_path = ""
-    detection_classifier_path = ""
-    training_data_path = ""
-    img = Initializer.load_image(image_path)
-    detection_classifier = Initializer.load_classifier(detection_classifier_path)
-
-    name_list = get_name_list(training_data_path)
-    face_list, label_list = preprocess(training_data_path, detection_classifier)
-    trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH")
-
-    ret_img = get_recognition(img,training_data_path, detection_classifier, trained_recognizer)
-    Initializer.display_image("Recognized Faces", ret_img)
+    image_path = "opencv_stuff/samples/data/lena.jpg"
+    opencv_classifier_path = "opencv_stuff/lbpcascades/lbpcascade_frontalface_improved.xml"
+    f = FaceDetector(image_path,opencv_classifier_path)
+    #boxed_img = f.get_boxed_faces()
+    #f.display_img("boxed", boxed_img)
+    face_only_list = f.get_faces()
+    for img, coord in face_only_list:
+        f.display_img("face_only", img)
+        print(coord)
