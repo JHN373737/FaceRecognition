@@ -98,6 +98,23 @@ def label_image(img, coord, name, confidence):
     txt = (name + ", " + "{0:.3f}".format(confidence))
     cv2.putText(img, txt, (x-10, y-5), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,255), 2)
 
+    
+def video_get_recognition(video_path, name_list, detection_classifier, trained_recognizer):
+    cap = cv2.VideoCapture(video_path)
+
+    while (cap.isOpened()):
+        ret_code, frame = cap.read()
+        ret_frame = get_recognition(frame, name_list, detection_classifier, trained_recognizer) #for every frame, perform recognition and return frame
+
+        cv2.imshow('frame', ret_frame)
+        if cv2.waitKey(25) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()    
+    
+    
+    
 if __name__ == '__main__':
     image_path = "test-data/test2.jpeg"
     detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
