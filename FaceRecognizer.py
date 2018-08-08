@@ -35,10 +35,10 @@ def preprocess(training_data_path, detection_classifier):
                 if ( (not os.path.isdir(image_path)) and (not image.startswith(".")) ): # assume it is an image if not dir and doesn't start with '.' (system file)
                     img = Initializer.load_image(image_path)
                     face_tuple = FaceDetector.get_faces(img, detection_classifier)
-                    if len(face_tuple)> 0:
-                        face_tuple = face_tuple[0]
+                    if len(face_tuple)== 1: # if one face detected, keep in training data, else skip
+                        face_tuple = face_tuple[0] 
                     else:
-                        print("No faces found in "+ str(image_path))
+                        print("No faces or more than one face found in "+ str(image_path) + " so not used")
                         continue
                     if face_tuple[0] is not None: # face_tuple[0] = face image in grayscale
                         face_list.append(face_tuple[0])
