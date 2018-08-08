@@ -41,7 +41,7 @@ def preprocess(training_data_path, detection_classifier):
                         print("No faces found in "+ str(image_path))
                         continue
                     if face_tuple[0] is not None: # face_tuple[0] = face image in grayscale
-                        face_list.append(face_tuple)
+                        face_list.append(face_tuple[0])
                         label_list.append(label)
                     else:
                         print("No face was detected in "+str(image_path)+ " so the image is not used")
@@ -65,13 +65,13 @@ def get_name_list(training_data_path):
 
 def train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH"):
     if opencv_recognizer_type == "LBPH":
-        recognizer = cv2.face.createLBPHFaceRecognizer()
+        recognizer = cv2.face.LBPHFaceRecognizer_create()
     if opencv_recognizer_type == "Eigen":
-        recognizer = cv2.face.createEigenFaceRecognizer()
+        recognizer = cv2.face.EigenFaceRecognizer_create()
     if opencv_recognizer_type == "Fisher":
-        recognizer = cv2.face.createFisherFaceRecognizer()
+        recognizer = cv2.face.FisherFaceRecognizer_create()
 
-    recognizer.train(face_list, np.array(label_list))
+    recognizer.train(face_list, np.array(label_list)) #face_list[0] gives face images
     return recognizer
 
 # takes image, list of names respective to labels (name[label] = person with that label), detection classifier object, trained recognizer object
@@ -95,19 +95,20 @@ def get_recognition(img, name_list, detection_classifier, trained_recognizer):
 def label_image(img, coord, name, confidence):
     (x,y,w,h) = coord
     cv2.rectangle(img, (x,y), (x+w,y+h), (0,0,255), 2)
-    txt = (name + ", " + confidence)
-    cv2.putText(img, txt, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,255), 2)
+    txt = (name + ", " + "{0:.3f}".format(confidence))
+    cv2.putText(img, txt, (x-10, y-5), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,255), 2)
 
 if __name__ == '__main__':
-    #image_path = ""
+    image_path = "test-data/test2.jpeg"
     detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     training_data_path = "training-data"
-    #img = Initializer.load_image(image_path)
+    img = Initializer.load_image(image_path)
     detection_classifier = Initializer.load_detection_classifier(detection_classifier_path)
 
     name_list = get_name_list(training_data_path)
+
     face_list, label_list = preprocess(training_data_path, detection_classifier)
     trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH")
 
-    #ret_img = get_recognition(img,training_data_path, detection_classifier, trained_recognizer)
-    #Initializer.display_image("Recognized Faces", ret_img)
+    ret_img = get_recognition(img, name_list, detection_classifier, trained_recognizer)
+    Initializer.display_img("Recognized Faces", ret_img)
