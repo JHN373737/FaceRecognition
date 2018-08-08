@@ -1,6 +1,7 @@
 import FaceDetector, Initializer
 import cv2
 import os
+import copy
 import numpy as np
 from pathlib import Path
 
@@ -33,13 +34,21 @@ def preprocess(training_data_path, detection_classifier):
                 image_path = Path(dir_path, image)
                 if ( (not os.path.isdir(image_path)) and (not image.startswith(".")) ): # assume it is an image if not dir and doesn't start with '.' (system file)
                     img = Initializer.load_image(image_path)
-                    face_tuple = FaceDetector.get_faces(img, detection_classifier)[0] # get 1st face and coordinates
-                    if face_tuple[0] is not None:
+                    face_tuple = FaceDetector.get_faces(img, detection_classifier)
+                    if len(face_tuple)> 0:
+                        face_tuple = face_tuple[0]
+                    else:
+                        print("No faces found in "+ str(image_path))
+                        continue
+                    if face_tuple[0] is not None: # face_tuple[0] = face image in grayscale
                         face_list.append(face_tuple)
                         label_list.append(label)
                     else:
                         print("No face was detected in "+str(image_path)+ " so the image is not used")
             label += 1
+    if len(face_list)<= 0:
+        print("No faces detected in training data -> cannot proceed")
+        raise SystemExit
 
     return face_list, label_list
 
@@ -71,6 +80,9 @@ def train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH"):
 def get_recognition(img, name_list, detection_classifier, trained_recognizer):
     img_copy = img.copy()
     data = FaceDetector.get_faces(img, detection_classifier) # get all faces/coords in image and try to detect all
+    if len(data) <= 0:
+        print("No faces recognized in test image -> cannot proceed")
+        raise SystemExit
             #  what happens if face isn't in training data
 
     for face, coord in data: # perform recognition on every detected face
@@ -87,15 +99,15 @@ def label_image(img, coord, name, confidence):
     cv2.putText(img, txt, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,255), 2)
 
 if __name__ == '__main__':
-    image_path = ""
-    detection_classifier_path = ""
-    training_data_path = ""
-    img = Initializer.load_image(image_path)
-    detection_classifier = Initializer.load_classifier(detection_classifier_path)
+    #image_path = ""
+    detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
+    training_data_path = "training-data"
+    #img = Initializer.load_image(image_path)
+    detection_classifier = Initializer.load_detection_classifier(detection_classifier_path)
 
     name_list = get_name_list(training_data_path)
     face_list, label_list = preprocess(training_data_path, detection_classifier)
     trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH")
 
-    ret_img = get_recognition(img,training_data_path, detection_classifier, trained_recognizer)
-    Initializer.display_image("Recognized Faces", ret_img)
+    #ret_img = get_recognition(img,training_data_path, detection_classifier, trained_recognizer)
+    #Initializer.display_image("Recognized Faces", ret_img)
