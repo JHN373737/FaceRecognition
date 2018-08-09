@@ -39,6 +39,20 @@ def get_boxed_faces(img, opencv_classifier):
     return img_copy
 
 
+def video_get_boxed_faces(video_path, opencv_classifier):
+    cap = cv2.VideoCapture(video_path)
+
+    while (cap.isOpened()):
+        ret_code, frame = cap.read()
+        ret_frame = get_boxed_faces(frame, opencv_classifier) # for every frame, draw box around faces and return frame
+
+        cv2.imshow('frame', ret_frame)
+        if cv2.waitKey(25) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
 
 
 
