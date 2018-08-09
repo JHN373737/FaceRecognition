@@ -7,9 +7,9 @@ import copy
 # takes image and opencv classifier (Haar or LBP)
 # return list of faces detected (coordinates of rectangle around face)
 def detect_faces(img, opencv_classifier):
-    gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # convert to grayscale bc opencv classifiers expect
+    gray_img = Initializer.cvt2GRAY(img) # convert to grayscale bc opencv classifiers expect
     # get list of coordinates (rectangle) for all faces
-    face_list = opencv_classifier.detectMultiScale(gray_img, scaleFactor=1.1, minNeighbors=3)  # scalefactor is 1.2 to rescale for faces closer to camera
+    face_list = opencv_classifier.detectMultiScale(gray_img, scaleFactor=1.2, minNeighbors=3)  # scalefactor is 1.2 to rescale for faces closer to camera
     #print("#faces found: " + str(len(face_list)))
     return face_list
 
@@ -17,7 +17,7 @@ def detect_faces(img, opencv_classifier):
 # takes image and opencv classifier (Haar or LBP)
 # returns list of tuples: (grayscale image of face only, coordinates of that face) for each face in image
 def get_faces(img, opencv_classifier):
-    gray_image = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray_image = Initializer.cvt2GRAY(img)
     face_list = detect_faces(img, opencv_classifier)
     ret_list = []
     #loop through detected faces
@@ -57,9 +57,10 @@ def video_get_boxed_faces(video_path, opencv_classifier):
 
 
 if __name__ == '__main__':
-    image_path = "Harry_Potter_Cast.jpg"
+    image_path = "att_faces/test_data/B4.PGM"
     opencv_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     img = Initializer.load_image(image_path)
+    #Initializer.display_img("title",img)
     opencv_classifier = Initializer.load_detection_classifier(opencv_classifier_path)
     #boxed_img = get_boxed_faces(img, opencv_classifier)
     #Initializer.display_img("boxed", boxed_img)
