@@ -52,5 +52,5 @@ def convert_percent(test_percent, train_path, test_path):
                         shutil.move(str(file_path), str(dest))
                         count += 1
 
-#convert_percent(20, "att_faces/training_data/", "att_faces/test_data/")
+#convert_percent(10, "att_faces/training_data/", "att_faces/test_data/")
 #print("done")
