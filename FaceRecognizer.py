@@ -132,8 +132,8 @@ def video_get_recognition(video_path, name_list, detection_classifier, trained_r
     
     
 if __name__ == '__main__':
-    training_data_path = "att_faces/training_data/"
-    test_data_path = "att_faces/test_data/"
+    training_data_path = "YALE_normalized_faces/faces/training_data/"
+    test_data_path = "YALE_normalized_faces/faces/test_data/"
     #detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     detection_classifier_path = "opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml"
     detection_classifier = Initializer.load_detection_classifier(detection_classifier_path)
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     print("correct: " + str(correct))
     print("incorrect: " + str(incorrect))
     print("incorrect ones are(actual,predicted): " + str(incorrect_list))
-    '''
+
     for actual,predicted in incorrect_list: #actual, predicted are also dir names
         actual_path = Path(training_data_path, actual)
         actual_path = Path(actual_path, os.listdir(str(actual_path))[0]) # path of 1st image
@@ -183,9 +183,9 @@ if __name__ == '__main__':
 
         actual_img = Initializer.load_image(actual_path)
         predicted_img = Initializer.load_image(predicted_path)
-        Initializer.display_img("title", actual_img)
-        Initializer.display_img("title", predicted_img)
-    '''
+        Initializer.display_img("actual", actual_img)
+        Initializer.display_img("predicted", predicted_img)
+
 
     print("After preprocess Detection Performance: "+ "{0:.2f}".format(((total-discarded)/total)*100.0) +"%  ("+ str(total-discarded)+"/"+str(total)+")" )
     print("Recognition Performance: " + "{0:.2f}".format((correct/total)*100.0) +"% correctly recognized" +
