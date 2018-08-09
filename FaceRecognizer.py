@@ -2,6 +2,8 @@ import FaceDetector, Initializer
 import cv2
 import os
 import copy
+import imghdr
+import re
 import numpy as np
 from pathlib import Path
 
@@ -32,7 +34,7 @@ def preprocess(training_data_path, detection_classifier):
             images = os.listdir(str(dir_path))
             for image in images:
                 image_path = Path(dir_path, image)
-                if ( (not os.path.isdir(image_path)) and (not image.startswith(".")) ): # assume it is an image if not dir and doesn't start with '.' (system file)
+                if imghdr.what(image_path)!= None: #check to make sure it's an image
                     img = Initializer.load_image(image_path)
                     face_tuple = FaceDetector.get_faces(img, detection_classifier)
                     if len(face_tuple)== 1: # if one face detected, keep in training data, else skip
@@ -91,6 +93,20 @@ def get_recognition(img, name_list, detection_classifier, trained_recognizer):
         label_image(img_copy, coord, face_name, confidence)
     return img_copy
 
+# does not return image - just predicted face_name and confidence
+    # Only works for test images with only one detected face or uses 1st face detected
+def get_recognition_stats(img, name_list, detection_classifier, trained_recognizer):
+    data = FaceDetector.get_faces(img, detection_classifier) # get all faces/coords in image and try to detect all
+    if len(data) <= 0:
+        print("No faces recognized in test image -> cannot proceed")
+        raise SystemExit
+            #  what happens if face isn't in training data
+
+    face, coord = data[0] #take 1st detected face
+    label, confidence = trained_recognizer.predict(face)
+    face_name = name_list[label]
+    return (face_name, confidence)
+
 
 def label_image(img, coord, name, confidence):
     (x,y,w,h) = coord
@@ -116,10 +132,9 @@ def video_get_recognition(video_path, name_list, detection_classifier, trained_r
     
     
 if __name__ == '__main__':
-    image_path = "test-data/test2.jpeg"
-    detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     training_data_path = "training-data"
-    img = Initializer.load_image(image_path)
+    test_data_path = "test-data"
+    detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     detection_classifier = Initializer.load_detection_classifier(detection_classifier_path)
 
     name_list = get_name_list(training_data_path)
@@ -127,5 +142,16 @@ if __name__ == '__main__':
     face_list, label_list = preprocess(training_data_path, detection_classifier)
     trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH")
 
-    ret_img = get_recognition(img, name_list, detection_classifier, trained_recognizer)
-    Initializer.display_img("Recognized Faces", ret_img)
+
+    for image_name in os.listdir(test_data_path):
+        image_path = Path(test_data_path, image_name)
+        img = Initializer.load_image(image_path)
+        predicted_name, confidence = get_recognition_stats(img, name_list, detection_classifier, trained_recognizer)
+        actual_name = re.sub(r'[0-9]+', '', image_name) # remove digits
+        actual_name = actual_name.split(".")[0] #get everything before . from file extension
+
+        if actual_name == predicted_name:
+            print("correct: "+predicted_name + " correctly predicted with "+ str(confidence) + " confidence")
+        else:
+            print("incorrect: "+actual_name+" predicted as "+ predicted_name)
+        #Initializer.display_img("Recognized Faces", ret_img)
