@@ -25,7 +25,7 @@ def convert(num, train_path, test_path):
 #convert(2, "", "")
 #print("done")
 
-# mv test_percent/100 * total number of images in train_path to test_path
+# mv test_percent/100 * total number of images in train_path to test_path - renamed to dir_name+ number
 def convert_percent(test_percent, train_path, test_path):
     count = 0  # added to new name of image to prevent same name errors
     dir_size = 0  # number of images in dir
@@ -52,5 +52,5 @@ def convert_percent(test_percent, train_path, test_path):
                         shutil.move(str(file_path), str(dest))
                         count += 1
 
-#convert_percent(20, "", "")
+#convert_percent(20, "att_faces/training_data/", "att_faces/test_data/")
 #print("done")
