@@ -134,7 +134,8 @@ def video_get_recognition(video_path, name_list, detection_classifier, trained_r
 if __name__ == '__main__':
     training_data_path = "att_faces/training_data/"
     test_data_path = "att_faces/test_data/"
-    detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
+    #detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
+    detection_classifier_path = "opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml"
     detection_classifier = Initializer.load_detection_classifier(detection_classifier_path)
 
     name_list = get_name_list(training_data_path)
@@ -185,7 +186,8 @@ if __name__ == '__main__':
         Initializer.display_img("title", actual_img)
         Initializer.display_img("title", predicted_img)
     '''
-    print("Detection Performance: "+ "{0:.2f}".format(((total-discarded)/total)*100.0) +"% detected")
+
+    print("After preprocess Detection Performance: "+ "{0:.2f}".format(((total-discarded)/total)*100.0) +"%  ("+ str(total-discarded)+"/"+str(total)+")" )
     print("Recognition Performance: " + "{0:.2f}".format((correct/total)*100.0) +"% correctly recognized" +
           ", with avg confidence: "+ "{0:.3f}".format((total_confidence/total)))
 
