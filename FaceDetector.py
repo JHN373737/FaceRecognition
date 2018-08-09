@@ -9,7 +9,8 @@ import copy
 def detect_faces(img, opencv_classifier):
     gray_img = Initializer.cvt2GRAY(img) # convert to grayscale bc opencv classifiers expect
     # get list of coordinates (rectangle) for all faces
-    face_list = opencv_classifier.detectMultiScale(gray_img, scaleFactor=1.2, minNeighbors=3)  # scalefactor is 1.2 to rescale for faces closer to camera
+    #face_list = opencv_classifier.detectMultiScale(gray_img, scaleFactor=1.2, minNeighbors=3)  # scalefactor is 1.2 to rescale for faces closer to camera
+    face_list = opencv_classifier.detectMultiScale(gray_img)
     #print("#faces found: " + str(len(face_list)))
     return face_list
 
