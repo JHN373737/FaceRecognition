@@ -52,5 +52,5 @@ def convert_percent(test_percent, train_path, test_path):
                         shutil.move(str(file_path), str(dest))
                         count += 1
 
-convert_percent(20, "/home/jnguyen/Downloads/thumbnails_features_deduped_sample/", "/home/jnguyen/Desktop/test_data")
-print("done")
+#convert_percent(20, "", "")
+#print("done")
