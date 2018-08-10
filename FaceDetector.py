@@ -48,7 +48,7 @@ def video_get_boxed_faces(video_path, opencv_classifier):
         ret_frame = get_boxed_faces(frame, opencv_classifier) # for every frame, draw box around faces and return frame
 
         cv2.imshow('frame', ret_frame)
-        if cv2.waitKey(25) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
+        if cv2.waitKey(1) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
             break
 
     cap.release()
@@ -58,14 +58,17 @@ def video_get_boxed_faces(video_path, opencv_classifier):
 
 
 if __name__ == '__main__':
-    image_path = "att_faces/test_data/B4.PGM"
+    image_path = "threshold_test_data/troll_snipped.JPG"
     opencv_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     img = Initializer.load_image(image_path)
     #Initializer.display_img("title",img)
     opencv_classifier = Initializer.load_detection_classifier(opencv_classifier_path)
-    #boxed_img = get_boxed_faces(img, opencv_classifier)
-    #Initializer.display_img("boxed", boxed_img)
-    face_only_list = get_faces(img, opencv_classifier)
-    for img, coord in face_only_list:
-        print(coord)
-        Initializer.display_img("face_only", img)
+    boxed_img = get_boxed_faces(img, opencv_classifier)
+    Initializer.display_img("boxed", boxed_img)
+    #face_only_list = get_faces(img, opencv_classifier)
+    #for img, coord in face_only_list:
+    #    print(coord)
+    #    Initializer.display_img("face_only", img)
+
+    video_path = "HP_vid_test_data/HP_Duelling_Trim.mp4"
+    video_get_boxed_faces(video_path, opencv_classifier)
