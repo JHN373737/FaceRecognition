@@ -40,20 +40,29 @@ def get_boxed_faces(img, opencv_classifier):
     return img_copy
 
 
-def video_get_boxed_faces(video_path, opencv_classifier):
+def video_get_boxed_faces(video_path, opencv_classifier, output_path):
     cap = cv2.VideoCapture(video_path)
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # codec is platform dependent - windows: DIVX
+    out = cv2.VideoWriter(output_path, fourcc, 29.88, (640, 294))  # 29.88 fps, 640 width, 294 height
 
     while (cap.isOpened()):
         ret_code, frame = cap.read()
-        ret_frame = get_boxed_faces(frame, opencv_classifier) # for every frame, draw box around faces and return frame
+        if ret_code == True:
+            ret_frame = get_boxed_faces(frame, opencv_classifier)  # for every frame, draw box around faces and return frame
 
-        cv2.imshow('frame', ret_frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
+            out.write(ret_frame) # write the new frame
+            cv2.imshow('frame', ret_frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
+                break
+        else:
             break
 
+    # Release everything if job is finished
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
-
 
 
 
@@ -71,4 +80,5 @@ if __name__ == '__main__':
     #    Initializer.display_img("face_only", img)
 
     video_path = "HP_vid_test_data/HP_Duelling_Trim.mp4"
-    video_get_boxed_faces(video_path, opencv_classifier)
+    output_path = "HP_vid_test_data/HP_Duelling_Trim_out.mp4"
+    video_get_boxed_faces(video_path, opencv_classifier, output_path)
