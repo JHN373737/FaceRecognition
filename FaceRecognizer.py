@@ -104,6 +104,7 @@ def get_recognition_stats(img, name_list, detection_classifier, trained_recogniz
 
     face, coord = data[0] #take 1st detected face
     label, confidence = trained_recognizer.predict(face)
+    #if confidence > 125: name = unknown
     face_name = name_list[label]
     return (face_name, confidence)
 
@@ -115,25 +116,34 @@ def label_image(img, coord, name, confidence):
     cv2.putText(img, txt, (x-10, y-5), cv2.FONT_HERSHEY_PLAIN, 1.5, (0,0,255), 2)
 
     
-def video_get_recognition(video_path, name_list, detection_classifier, trained_recognizer):
+def video_get_recognition(video_path, name_list, detection_classifier, trained_recognizer, output_path):
     cap = cv2.VideoCapture(video_path)
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # codec is platform dependent - windows: DIVX
+    out = cv2.VideoWriter(output_path, fourcc, 29.88, (640, 294))  # 29.88 fps, 640 width, 294 height
 
     while (cap.isOpened()):
         ret_code, frame = cap.read()
-        ret_frame = get_recognition(frame, name_list, detection_classifier, trained_recognizer) #for every frame, perform recognition and return frame
+        if ret_code == True:
+            ret_frame = get_recognition(frame, name_list, detection_classifier, trained_recognizer)  # for every frame, perform recognition and return frame
 
-        cv2.imshow('frame', ret_frame)
-        if cv2.waitKey(25) & 0xFF == ord('q'): # wait key is time(ms) between frames, press q to exit
+            out.write(ret_frame)  # write the new frame
+            cv2.imshow('frame', ret_frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):  # wait key is time(ms) between frames, press q to exit
+                break
+        else:
             break
 
+    # Release everything if job is finished
     cap.release()
-    cv2.destroyAllWindows()    
-    
-    
+    out.release()
+    cv2.destroyAllWindows()
+
     
 if __name__ == '__main__':
-    training_data_path = "YALE_normalized_faces/faces/training_data/"
-    test_data_path = "YALE_normalized_faces/faces/test_data/"
+    training_data_path = "att_faces/training_data/"
+    test_data_path = "threshold_test_data/"
     #detection_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
     detection_classifier_path = "opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml"
     detection_classifier = Initializer.load_detection_classifier(detection_classifier_path)
@@ -143,53 +153,67 @@ if __name__ == '__main__':
     face_list, label_list = preprocess(training_data_path, detection_classifier)
     trained_recognizer = train_recognizer(face_list, label_list, opencv_recognizer_type="LBPH")
 
-    correct = 0
-    incorrect = 0
-    total_confidence=0
-    incorrect_list = []
-    for image_name in os.listdir(test_data_path):
-        image_path = Path(test_data_path, image_name)
-        img = Initializer.load_image(image_path)
-        predicted_name, confidence = get_recognition_stats(img, name_list, detection_classifier, trained_recognizer)
-        if predicted_name==None or confidence==None:
-            print("no faces detected in "+ image_name)
-            continue
-        actual_name = re.sub(r'[0-9]+', '', image_name) # remove digits
-        actual_name = actual_name.split(".")[0] #get everything before . from file extension
+    video_path = "HP_vid_test_data/HP_Duelling_Trim.mp4"
+    output_path = "HP_vid_test_data/HP_Duelling_Trim_out.mp4"
+    video_get_recognition(video_path, name_list, detection_classifier, trained_recognizer, output_path)
 
-        if actual_name == predicted_name:
-            print("correct: "+predicted_name + " correctly predicted with "+ str(confidence) + " confidence")
-            correct+=1
-            total_confidence+=confidence
-        else:
-            print("incorrect: "+actual_name+" predicted as "+ predicted_name)
-            incorrect_list.append((actual_name,predicted_name))
-            incorrect+=1
-        #Initializer.display_img("Recognized Faces", ret_img)
-
-    total = len(os.listdir(test_data_path))
-    discarded = total-(correct+incorrect)
-    print("total: " + str(total))
-    print("discarded: " + str(discarded)) #no faces detected so couldn't use
-    print("correct: " + str(correct))
-    print("incorrect: " + str(incorrect))
-    print("incorrect ones are(actual,predicted): " + str(incorrect_list))
-
-    for actual,predicted in incorrect_list: #actual, predicted are also dir names
-        actual_path = Path(training_data_path, actual)
-        actual_path = Path(actual_path, os.listdir(str(actual_path))[0]) # path of 1st image
-        predicted_path = Path(training_data_path, predicted)
-        predicted_path = Path(predicted_path, os.listdir(str(predicted_path))[0]) # path of 1st image
-
-        actual_img = Initializer.load_image(actual_path)
-        predicted_img = Initializer.load_image(predicted_path)
-        Initializer.display_img("actual", actual_img)
-        Initializer.display_img("predicted", predicted_img)
-
-
-    print("After preprocess Detection Performance: "+ "{0:.2f}".format(((total-discarded)/total)*100.0) +"%  ("+ str(total-discarded)+"/"+str(total)+")" )
-    print("Recognition Performance: " + "{0:.2f}".format((correct/total)*100.0) +"% correctly recognized" +
-          ", with avg confidence: "+ "{0:.3f}".format((total_confidence/total)))
-
+    # correct = 0
+    # incorrect = 0
+    # total_confidence=0
+    # incorrect_list = []
+    # for image_name in os.listdir(test_data_path):
+    #     image_path = Path(test_data_path, image_name)
+    #     img = Initializer.load_image(image_path)
+    #
+    #     #'''
+    #     #displaying boxed recognized faces
+    #     ret_img = get_recognition(img,name_list,detection_classifier,trained_recognizer)
+    #     Initializer.display_img("title", ret_img)
+    #     #'''
+    #     '''
+    #     #displaying get recognition stats only no images
+    #     predicted_name, confidence = get_recognition_stats(img, name_list, detection_classifier, trained_recognizer)
+    #     if predicted_name==None or confidence==None:
+    #         print("no faces detected in "+ image_name)
+    #         continue
+    #     actual_name = re.sub(r'[0-9]+', '', image_name) # remove digits
+    #     actual_name = actual_name.split(".")[0] #get everything before . from file extension
+    #
+    #     if actual_name == predicted_name:
+    #         print("correct: "+predicted_name + " correctly predicted with "+ str(confidence) + " confidence")
+    #         correct+=1
+    #         total_confidence+=confidence
+    #     else:
+    #         print("incorrect: "+actual_name+" predicted as "+ predicted_name)
+    #         incorrect_list.append((actual_name,predicted_name))
+    #         incorrect+=1
+    #     #Initializer.display_img("Recognized Faces", ret_img)
+    #
+    # total = len(os.listdir(test_data_path))
+    # discarded = total-(correct+incorrect)
+    # print("total: " + str(total))
+    # print("discarded: " + str(discarded)) #no faces detected so couldn't use
+    # print("correct: " + str(correct))
+    # print("incorrect: " + str(incorrect))
+    # print("incorrect ones are(actual,predicted): " + str(incorrect_list))
+    # '''
+    # '''
+    # # display all the incorrectly identified images (actual first, then wrong prediction)
+    # for actual,predicted in incorrect_list: #actual, predicted are also dir names
+    #     actual_path = Path(training_data_path, actual)
+    #     actual_path = Path(actual_path, os.listdir(str(actual_path))[0]) # path of 1st image
+    #     predicted_path = Path(training_data_path, predicted)
+    #     predicted_path = Path(predicted_path, os.listdir(str(predicted_path))[0]) # path of 1st image
+    #
+    #     actual_img = Initializer.load_image(actual_path)
+    #     predicted_img = Initializer.load_image(predicted_path)
+    #     Initializer.display_img("actual", actual_img)
+    #     Initializer.display_img("predicted", predicted_img)
+    # '''
+    # '''
+    # print("After preprocess Detection Performance: "+ "{0:.2f}".format(((total-discarded)/total)*100.0) +"%  ("+ str(total-discarded)+"/"+str(total)+")" )
+    # print("Recognition Performance: " + "{0:.2f}".format((correct/total)*100.0) +"% correctly recognized" +
+    #       ", with avg confidence: "+ "{0:.3f}".format((total_confidence/total)))
+    # '''
 
 
