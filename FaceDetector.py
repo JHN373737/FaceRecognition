@@ -3,6 +3,7 @@ import Initializer
 import cv2
 import os
 import copy
+from pathlib import Path
 
 # takes image and opencv classifier (Haar or LBP)
 # return list of faces detected (coordinates of rectangle around face)
@@ -10,7 +11,7 @@ def detect_faces(img, opencv_classifier):
     gray_img = Initializer.cvt2GRAY(img) # convert to grayscale bc opencv classifiers expect
     # get list of coordinates (rectangle) for all faces
     #face_list = opencv_classifier.detectMultiScale(gray_img, scaleFactor=1.2, minNeighbors=3)  # scalefactor is 1.2 to rescale for faces closer to camera
-    face_list = opencv_classifier.detectMultiScale(gray_img)
+    face_list = opencv_classifier.detectMultiScale(gray_img, scaleFactor=1.3, minNeighbors=3)
     #print("#faces found: " + str(len(face_list)))
     return face_list
 
@@ -34,6 +35,9 @@ def get_faces(img, opencv_classifier):
 def get_boxed_faces(img, opencv_classifier):
     img_copy = img.copy()
     face_list = detect_faces(img, opencv_classifier)
+    #bad_img = Initializer.load_image("trashcan.jpg")
+    if len(face_list)<=0:
+        return img_copy
     # loop through detected faces and draw rectangles around them
     for (x, y, w, h) in face_list:
         cv2.rectangle(img_copy, (x, y), (x + w, y + h), (0, 0, 255), 2)  # img to draw on, start coord, end coord, color of rect, line width of rect
@@ -67,18 +71,24 @@ def video_get_boxed_faces(video_path, opencv_classifier, output_path):
 
 
 if __name__ == '__main__':
-    image_path = "threshold_test_data/troll_snipped.JPG"
-    opencv_classifier_path = "opencv/sources/data/lbpcascades/lbpcascade_frontalface_improved.xml"
+    image_path = "HP_test_detect.jpg"
+    opencv_classifier_path = "opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml"
     img = Initializer.load_image(image_path)
-    #Initializer.display_img("title",img)
+    #Initializer.display_img("title",img)a
     opencv_classifier = Initializer.load_detection_classifier(opencv_classifier_path)
-    boxed_img = get_boxed_faces(img, opencv_classifier)
-    Initializer.display_img("boxed", boxed_img)
-    #face_only_list = get_faces(img, opencv_classifier)
+
+    video_path = "vid_test_data/HP_troll_trim_start2.mp4"
+    output_path = "vid_test_data/HP_troll_trim_start2_out.mp4"
+    boxed_img = get_boxed_faces(img,opencv_classifier)
+    face_only_list = get_faces(img, opencv_classifier)
+
+
+    #Initializer.display_img("boxed", boxed_img)
+
+
     #for img, coord in face_only_list:
     #    print(coord)
     #    Initializer.display_img("face_only", img)
 
-    video_path = "HP_vid_test_data/HP_Duelling_Trim.mp4"
-    output_path = "HP_vid_test_data/HP_Duelling_Trim_out.mp4"
-    video_get_boxed_faces(video_path, opencv_classifier, output_path)
+
+    #video_get_boxed_faces(video_path, opencv_classifier, output_path)
