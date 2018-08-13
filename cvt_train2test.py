@@ -3,6 +3,10 @@ import imghdr
 import shutil
 from pathlib import Path
 
+'''
+Used to move a user-inputted number or percentage of images from training folder to test folder
+    Use when you have a large data set and need to split into train, test
+'''
 
 # mv "num" images from every dir in training data dir to test data dir - renamed to dir_name+a number
 def convert(num, train_path, test_path):
